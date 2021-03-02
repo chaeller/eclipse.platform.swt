@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Marcel Keller - bugfix for .swt folder location
  *******************************************************************************/
 package org.eclipse.swt.internal;
 
@@ -43,13 +44,17 @@ public class Library {
 	 * The JAVA and SWT versions
 	 */
 	public static final int JAVA_VERSION, SWT_VERSION;
-	public static final String USER_HOME;
 
 	static final String SEPARATOR;
 	static final String DELIMITER;
 
-	static final String JAVA_LIB_PATH = "java.library.path";
-	static final String SWT_LIB_PATH = "swt.library.path";
+	static final String USER_HOME_PROPERTY = "user.home";
+	static final String JAVA_LIB_PATH_PROPERTY = "java.library.path";
+	static final String SWT_LIB_PATH_PROPERTY = "swt.library.path";
+
+	public static final String USER_HOME;
+	public static final String JAVA_LIB_DIR;
+	public static final String SWT_DIR;
 
 	static final String SUFFIX_64 = "-64";	//$NON-NLS-1$
 	static final String SWT_LIB_DIR;
@@ -57,7 +62,9 @@ public class Library {
 static {
 	DELIMITER = System.lineSeparator(); //$NON-NLS-1$
 	SEPARATOR = File.separator;
-	USER_HOME = System.getProperty ("user.home");
+	USER_HOME = System.getProperty(USER_HOME_PROPERTY);
+	JAVA_LIB_DIR = System.getProperty(JAVA_LIB_PATH_PROPERTY); 
+	SWT_DIR = System.getProperty(SWT_LIB_PATH_PROPERTY);
 	SWT_LIB_DIR = ".swt" + SEPARATOR + "lib" + SEPARATOR + os() + SEPARATOR + arch(); //$NON-NLS-1$ $NON-NLS-2$
 	JAVA_VERSION = parseVersion(System.getProperty("java.version")); //$NON-NLS-1$
 	SWT_VERSION = SWT_VERSION(MAJOR_VERSION, MINOR_VERSION);
@@ -293,7 +300,7 @@ public static void loadLibrary (String name, boolean mapName) {
 	StringBuilder message = new StringBuilder();
 
 	/* Try loading library from swt library path */
-	String path = System.getProperty (SWT_LIB_PATH); //$NON-NLS-1$
+	String path = SWT_DIR; //$NON-NLS-1$
 	if (path != null) {
 		path = new File (path).getAbsolutePath ();
 		if (load (path + SEPARATOR + mappedName1, message)) return;
@@ -400,10 +407,9 @@ public static File findResource(String subDir, String resourceName, boolean mapR
 	// This code commonly finds the resource if the swt project is a required project and the swt binary (for your platform)
 	// project is open in your workplace  (found in the JAVA_LIBRARY_PATH) or if you're explicitly specified SWT_LIBRARY_PATH.
 	{
-		Function<String, File> lookForFileInPath = searchPath -> {
-			String classpath = System.getProperty(searchPath);
-			if (classpath != null){
-				String[] paths = classpath.split(File.pathSeparator);
+		Function<String, File> lookForFileInPath = searchClasspath -> {
+			if (searchClasspath != null){
+				String[] paths = searchClasspath.split(File.pathSeparator);
 				for (String path : paths) {
 				File file = new File(path + SEPARATOR + maybeSubDirPath + finalResourceName);
 					if (file.exists()){
@@ -414,7 +420,7 @@ public static File findResource(String subDir, String resourceName, boolean mapR
 			return null;
 		};
 		File result = null;
-		for (String path : new String[] {JAVA_LIB_PATH,SWT_LIB_PATH}) {
+		for (String path : new String[] {JAVA_LIB_DIR,SWT_DIR}) {
 			result = lookForFileInPath.apply(path);
 			if (result != null)
 				return result;
@@ -451,13 +457,22 @@ public static File findResource(String subDir, String resourceName, boolean mapR
 		// then ./target/ will contain org.eclipse.swt.gtk.linux.x86_64-3.106.100-SNAPSHOT.jar (and it's source),
 		//  you can copy those into your test swt project and test that your resource is extracted into something like ~/.swt/...
 		// Lastly, if using subDir, you need to edit the build.properties and specify the folder you wish to have included in your jar in the includes.
-		File file = new File (USER_HOME + SEPARATOR +  SWT_LIB_DIR + maybeSubDirPathWithPrefix, finalResourceName);
+
+		/* Try loading library from swt library path */
+		String path = SWT_DIR;
+		if (path != null) {
+			path = new File(path).getAbsolutePath();
+		} else {
+			path = USER_HOME;
+		}
+
+		File file = new File (path + SEPARATOR +  SWT_LIB_DIR + maybeSubDirPathWithPrefix, finalResourceName);
 		if (file.exists()){
 			return file;
 		} else { // Try to extract file from jar if not found.
 
 			// Create temp directory if it doesn't exist
-			File tempDir = new File (USER_HOME, SWT_LIB_DIR + maybeSubDirPathWithPrefix);
+			File tempDir = new File (path, SWT_LIB_DIR + maybeSubDirPathWithPrefix);
 			if ((!tempDir.exists () || tempDir.isDirectory ())) {
 				tempDir.mkdirs ();
 			}

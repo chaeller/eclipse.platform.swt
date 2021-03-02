@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2020 Equo
+ * Copyright (c) 2021 Equo
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *   Guillermo Zunino, Equo - initial implementation
+ *   Mauro Garcia, Equo - Implemented download links
  ********************************************************************************/
 
 #include <stdarg.h>
@@ -22,6 +23,17 @@ typedef struct {
   uintptr_t args;
 } FunctionSt;
 
+typedef struct {
+  int32_t id;
+  int32_t status;
+  void * file;
+  void * url;
+  int64_t received;
+  int64_t total;
+  int64_t speed;
+  int32_t percent;
+} DownloadItem;
+
 const char *cefswt_cefstring_to_java(cef_string_t *cefstring);
 
 void cefswt_close_browser(cef_browser_t *browser, int force);
@@ -31,6 +43,8 @@ void cefswt_context_menu_cancel(cef_run_context_menu_callback_t *callback);
 char *cefswt_cookie_to_java(cef_cookie_t *cookie);
 
 char *cefswt_cookie_value(cef_cookie_t *cookie);
+
+void cefswt_find(cef_browser_t *, const char *search, int forward, int matchCase, int findNext);
 
 const cef_browser_t *cefswt_create_browser(void* hwnd,
                                            const char *url,
@@ -45,6 +59,12 @@ void cefswt_delete_cookies(void);
 void cefswt_dialog_close(cef_jsdialog_callback_t *callback, int success, cef_string_t *prompt);
 
 void cefswt_auth_callback(cef_auth_callback_t *callback, const char *user, const char *pass, int cont);
+
+int cefswt_handlekey(cef_browser_t *browser, cef_key_event_t *event);
+
+void cefswt_download_callback(void *callback, const char *jfile, int cont);
+
+void cefswt_download_item(cef_download_item_t *callback, DownloadItem *st);
 
 int cefswt_do_message_loop_work(void);
 

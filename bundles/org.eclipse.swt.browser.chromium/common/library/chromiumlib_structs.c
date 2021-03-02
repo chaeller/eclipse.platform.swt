@@ -18,6 +18,58 @@
 #include "swt.h"
 #include "chromiumlib_structs.h"
 
+#ifndef NO_DownloadItem
+typedef struct DownloadItem_FID_CACHE {
+	int cached;
+	jclass clazz;
+	jfieldID id, status, file, url, received, total, speed, percent;
+} DownloadItem_FID_CACHE;
+
+DownloadItem_FID_CACHE DownloadItemFc;
+
+void cacheDownloadItemFields(JNIEnv *env, jobject lpObject)
+{
+	if (DownloadItemFc.cached) return;
+	DownloadItemFc.clazz = (*env)->GetObjectClass(env, lpObject);
+	DownloadItemFc.id = (*env)->GetFieldID(env, DownloadItemFc.clazz, "id", "I");
+	DownloadItemFc.status = (*env)->GetFieldID(env, DownloadItemFc.clazz, "status", "I");
+	DownloadItemFc.file = (*env)->GetFieldID(env, DownloadItemFc.clazz, "file", "J");
+	DownloadItemFc.url = (*env)->GetFieldID(env, DownloadItemFc.clazz, "url", "J");
+	DownloadItemFc.received = (*env)->GetFieldID(env, DownloadItemFc.clazz, "received", "J");
+	DownloadItemFc.total = (*env)->GetFieldID(env, DownloadItemFc.clazz, "total", "J");
+	DownloadItemFc.speed = (*env)->GetFieldID(env, DownloadItemFc.clazz, "speed", "J");
+	DownloadItemFc.percent = (*env)->GetFieldID(env, DownloadItemFc.clazz, "percent", "I");
+	DownloadItemFc.cached = 1;
+}
+
+DownloadItem *getDownloadItemFields(JNIEnv *env, jobject lpObject, DownloadItem *lpStruct)
+{
+	if (!DownloadItemFc.cached) cacheDownloadItemFields(env, lpObject);
+	lpStruct->id = (*env)->GetIntField(env, lpObject, DownloadItemFc.id);
+	lpStruct->status = (*env)->GetIntField(env, lpObject, DownloadItemFc.status);
+	lpStruct->file = (void*)(*env)->GetLongField(env, lpObject, DownloadItemFc.file);
+	lpStruct->url = (void*)(*env)->GetLongField(env, lpObject, DownloadItemFc.url);
+	lpStruct->received = (*env)->GetLongField(env, lpObject, DownloadItemFc.received);
+	lpStruct->total = (*env)->GetLongField(env, lpObject, DownloadItemFc.total);
+	lpStruct->speed = (*env)->GetLongField(env, lpObject, DownloadItemFc.speed);
+	lpStruct->percent = (*env)->GetIntField(env, lpObject, DownloadItemFc.percent);
+	return lpStruct;
+}
+
+void setDownloadItemFields(JNIEnv *env, jobject lpObject, DownloadItem *lpStruct)
+{
+	if (!DownloadItemFc.cached) cacheDownloadItemFields(env, lpObject);
+	(*env)->SetIntField(env, lpObject, DownloadItemFc.id, (jint)lpStruct->id);
+	(*env)->SetIntField(env, lpObject, DownloadItemFc.status, (jint)lpStruct->status);
+	(*env)->SetLongField(env, lpObject, DownloadItemFc.file, (jlong)lpStruct->file);
+	(*env)->SetLongField(env, lpObject, DownloadItemFc.url, (jlong)lpStruct->url);
+	(*env)->SetLongField(env, lpObject, DownloadItemFc.received, (jlong)lpStruct->received);
+	(*env)->SetLongField(env, lpObject, DownloadItemFc.total, (jlong)lpStruct->total);
+	(*env)->SetLongField(env, lpObject, DownloadItemFc.speed, (jlong)lpStruct->speed);
+	(*env)->SetIntField(env, lpObject, DownloadItemFc.percent, (jint)lpStruct->percent);
+}
+#endif
+
 #ifndef NO_FunctionSt
 typedef struct FunctionSt_FID_CACHE {
 	int cached;
@@ -428,6 +480,49 @@ void setcef_display_handler_tFields(JNIEnv *env, jobject lpObject, cef_display_h
 }
 #endif
 
+#ifndef NO_cef_download_handler_t
+typedef struct cef_download_handler_t_FID_CACHE {
+	int cached;
+	jclass clazz;
+	jfieldID base, on_before_download, on_download_updated;
+} cef_download_handler_t_FID_CACHE;
+
+cef_download_handler_t_FID_CACHE cef_download_handler_tFc;
+
+void cachecef_download_handler_tFields(JNIEnv *env, jobject lpObject)
+{
+	if (cef_download_handler_tFc.cached) return;
+	cef_download_handler_tFc.clazz = (*env)->GetObjectClass(env, lpObject);
+	cef_download_handler_tFc.base = (*env)->GetFieldID(env, cef_download_handler_tFc.clazz, "base", "Lorg/eclipse/swt/internal/chromium/lib/cef_base_ref_counted_t;");
+	cef_download_handler_tFc.on_before_download = (*env)->GetFieldID(env, cef_download_handler_tFc.clazz, "on_before_download", "J");
+	cef_download_handler_tFc.on_download_updated = (*env)->GetFieldID(env, cef_download_handler_tFc.clazz, "on_download_updated", "J");
+	cef_download_handler_tFc.cached = 1;
+}
+
+cef_download_handler_t *getcef_download_handler_tFields(JNIEnv *env, jobject lpObject, cef_download_handler_t *lpStruct)
+{
+	if (!cef_download_handler_tFc.cached) cachecef_download_handler_tFields(env, lpObject);
+	{
+	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, cef_download_handler_tFc.base);
+	if (lpObject1 != NULL) getcef_base_ref_counted_tFields(env, lpObject1, &lpStruct->base);
+	}
+	lpStruct->on_before_download = (void*)(*env)->GetLongField(env, lpObject, cef_download_handler_tFc.on_before_download);
+	lpStruct->on_download_updated = (void*)(*env)->GetLongField(env, lpObject, cef_download_handler_tFc.on_download_updated);
+	return lpStruct;
+}
+
+void setcef_download_handler_tFields(JNIEnv *env, jobject lpObject, cef_download_handler_t *lpStruct)
+{
+	if (!cef_download_handler_tFc.cached) cachecef_download_handler_tFields(env, lpObject);
+	{
+	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, cef_download_handler_tFc.base);
+	if (lpObject1 != NULL) setcef_base_ref_counted_tFields(env, lpObject1, &lpStruct->base);
+	}
+	(*env)->SetLongField(env, lpObject, cef_download_handler_tFc.on_before_download, (jlong)lpStruct->on_before_download);
+	(*env)->SetLongField(env, lpObject, cef_download_handler_tFc.on_download_updated, (jlong)lpStruct->on_download_updated);
+}
+#endif
+
 #ifndef NO_cef_focus_handler_t
 typedef struct cef_focus_handler_t_FID_CACHE {
 	int cached;
@@ -520,6 +615,101 @@ void setcef_jsdialog_handler_tFields(JNIEnv *env, jobject lpObject, cef_jsdialog
 	(*env)->SetLongField(env, lpObject, cef_jsdialog_handler_tFc.on_before_unload_dialog, (jlong)lpStruct->on_before_unload_dialog);
 	(*env)->SetLongField(env, lpObject, cef_jsdialog_handler_tFc.on_reset_dialog_state, (jlong)lpStruct->on_reset_dialog_state);
 	(*env)->SetLongField(env, lpObject, cef_jsdialog_handler_tFc.on_dialog_closed, (jlong)lpStruct->on_dialog_closed);
+}
+#endif
+
+#ifndef NO_cef_key_event_t
+typedef struct cef_key_event_t_FID_CACHE {
+	int cached;
+	jclass clazz;
+	jfieldID type, modifiers, windows_key_code, native_key_code, is_system_key, character, unmodified_character, focus_on_editable_field;
+} cef_key_event_t_FID_CACHE;
+
+cef_key_event_t_FID_CACHE cef_key_event_tFc;
+
+void cachecef_key_event_tFields(JNIEnv *env, jobject lpObject)
+{
+	if (cef_key_event_tFc.cached) return;
+	cef_key_event_tFc.clazz = (*env)->GetObjectClass(env, lpObject);
+	cef_key_event_tFc.type = (*env)->GetFieldID(env, cef_key_event_tFc.clazz, "type", "I");
+	cef_key_event_tFc.modifiers = (*env)->GetFieldID(env, cef_key_event_tFc.clazz, "modifiers", "I");
+	cef_key_event_tFc.windows_key_code = (*env)->GetFieldID(env, cef_key_event_tFc.clazz, "windows_key_code", "I");
+	cef_key_event_tFc.native_key_code = (*env)->GetFieldID(env, cef_key_event_tFc.clazz, "native_key_code", "I");
+	cef_key_event_tFc.is_system_key = (*env)->GetFieldID(env, cef_key_event_tFc.clazz, "is_system_key", "I");
+	cef_key_event_tFc.character = (*env)->GetFieldID(env, cef_key_event_tFc.clazz, "character", "C");
+	cef_key_event_tFc.unmodified_character = (*env)->GetFieldID(env, cef_key_event_tFc.clazz, "unmodified_character", "C");
+	cef_key_event_tFc.focus_on_editable_field = (*env)->GetFieldID(env, cef_key_event_tFc.clazz, "focus_on_editable_field", "I");
+	cef_key_event_tFc.cached = 1;
+}
+
+cef_key_event_t *getcef_key_event_tFields(JNIEnv *env, jobject lpObject, cef_key_event_t *lpStruct)
+{
+	if (!cef_key_event_tFc.cached) cachecef_key_event_tFields(env, lpObject);
+	lpStruct->type = (*env)->GetIntField(env, lpObject, cef_key_event_tFc.type);
+	lpStruct->modifiers = (*env)->GetIntField(env, lpObject, cef_key_event_tFc.modifiers);
+	lpStruct->windows_key_code = (*env)->GetIntField(env, lpObject, cef_key_event_tFc.windows_key_code);
+	lpStruct->native_key_code = (*env)->GetIntField(env, lpObject, cef_key_event_tFc.native_key_code);
+	lpStruct->is_system_key = (*env)->GetIntField(env, lpObject, cef_key_event_tFc.is_system_key);
+	lpStruct->character = (*env)->GetCharField(env, lpObject, cef_key_event_tFc.character);
+	lpStruct->unmodified_character = (*env)->GetCharField(env, lpObject, cef_key_event_tFc.unmodified_character);
+	lpStruct->focus_on_editable_field = (*env)->GetIntField(env, lpObject, cef_key_event_tFc.focus_on_editable_field);
+	return lpStruct;
+}
+
+void setcef_key_event_tFields(JNIEnv *env, jobject lpObject, cef_key_event_t *lpStruct)
+{
+	if (!cef_key_event_tFc.cached) cachecef_key_event_tFields(env, lpObject);
+	(*env)->SetIntField(env, lpObject, cef_key_event_tFc.type, (jint)lpStruct->type);
+	(*env)->SetIntField(env, lpObject, cef_key_event_tFc.modifiers, (jint)lpStruct->modifiers);
+	(*env)->SetIntField(env, lpObject, cef_key_event_tFc.windows_key_code, (jint)lpStruct->windows_key_code);
+	(*env)->SetIntField(env, lpObject, cef_key_event_tFc.native_key_code, (jint)lpStruct->native_key_code);
+	(*env)->SetIntField(env, lpObject, cef_key_event_tFc.is_system_key, (jint)lpStruct->is_system_key);
+	(*env)->SetCharField(env, lpObject, cef_key_event_tFc.character, (jchar)lpStruct->character);
+	(*env)->SetCharField(env, lpObject, cef_key_event_tFc.unmodified_character, (jchar)lpStruct->unmodified_character);
+	(*env)->SetIntField(env, lpObject, cef_key_event_tFc.focus_on_editable_field, (jint)lpStruct->focus_on_editable_field);
+}
+#endif
+
+#ifndef NO_cef_keyboard_handler_t
+typedef struct cef_keyboard_handler_t_FID_CACHE {
+	int cached;
+	jclass clazz;
+	jfieldID base, on_pre_key_event, on_key_event;
+} cef_keyboard_handler_t_FID_CACHE;
+
+cef_keyboard_handler_t_FID_CACHE cef_keyboard_handler_tFc;
+
+void cachecef_keyboard_handler_tFields(JNIEnv *env, jobject lpObject)
+{
+	if (cef_keyboard_handler_tFc.cached) return;
+	cef_keyboard_handler_tFc.clazz = (*env)->GetObjectClass(env, lpObject);
+	cef_keyboard_handler_tFc.base = (*env)->GetFieldID(env, cef_keyboard_handler_tFc.clazz, "base", "Lorg/eclipse/swt/internal/chromium/lib/cef_base_ref_counted_t;");
+	cef_keyboard_handler_tFc.on_pre_key_event = (*env)->GetFieldID(env, cef_keyboard_handler_tFc.clazz, "on_pre_key_event", "J");
+	cef_keyboard_handler_tFc.on_key_event = (*env)->GetFieldID(env, cef_keyboard_handler_tFc.clazz, "on_key_event", "J");
+	cef_keyboard_handler_tFc.cached = 1;
+}
+
+cef_keyboard_handler_t *getcef_keyboard_handler_tFields(JNIEnv *env, jobject lpObject, cef_keyboard_handler_t *lpStruct)
+{
+	if (!cef_keyboard_handler_tFc.cached) cachecef_keyboard_handler_tFields(env, lpObject);
+	{
+	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, cef_keyboard_handler_tFc.base);
+	if (lpObject1 != NULL) getcef_base_ref_counted_tFields(env, lpObject1, &lpStruct->base);
+	}
+	lpStruct->on_pre_key_event = (void*)(*env)->GetLongField(env, lpObject, cef_keyboard_handler_tFc.on_pre_key_event);
+	lpStruct->on_key_event = (void*)(*env)->GetLongField(env, lpObject, cef_keyboard_handler_tFc.on_key_event);
+	return lpStruct;
+}
+
+void setcef_keyboard_handler_tFields(JNIEnv *env, jobject lpObject, cef_keyboard_handler_t *lpStruct)
+{
+	if (!cef_keyboard_handler_tFc.cached) cachecef_keyboard_handler_tFields(env, lpObject);
+	{
+	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, cef_keyboard_handler_tFc.base);
+	if (lpObject1 != NULL) setcef_base_ref_counted_tFields(env, lpObject1, &lpStruct->base);
+	}
+	(*env)->SetLongField(env, lpObject, cef_keyboard_handler_tFc.on_pre_key_event, (jlong)lpStruct->on_pre_key_event);
+	(*env)->SetLongField(env, lpObject, cef_keyboard_handler_tFc.on_key_event, (jlong)lpStruct->on_key_event);
 }
 #endif
 

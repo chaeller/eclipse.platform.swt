@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2020 Equo
+ * Copyright (c) 2021 Equo
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *   Guillermo Zunino, Equo - initial implementation
+ *   Mauro Garcia, Equo - Implemented download links
  ********************************************************************************/
 package org.eclipse.swt.internal.chromium.lib;
 
@@ -171,6 +172,23 @@ public class ChromiumLib extends C {
 	 */
 	public static final native void cefswt_auth_callback(long callback, String user, String password, int cont);
 
+	/**
+	 * @param callback cast=(void *)
+	 */
+	public static final native void cefswt_download_callback(long callback, String selected, int cont);
+
+	/**
+	 * @param download_item cast=(void *)
+	 * @param item flags=no_in
+	 */
+	public static final native void cefswt_download_item(long download_item, DownloadItem item);
+
+	/**
+	 * @param browser cast=(void *)
+	 * @param event cast=(void *)
+	 */
+	public static final native int cefswt_handlekey(long browser, long event);
+
 	public static final native void cefswt_shutdown();
 
 	public static final native boolean cefswt_set_cookie(String url, String name, String value, String domain, String path, int secure, int httpOnly, double maxAge);
@@ -185,6 +203,11 @@ public class ChromiumLib extends C {
 	/** @method flags=no_gen */
 	public static final native String cefswt_cookie_value(long cookie);
 
+	/**
+	 * @param browser cast=(void *)
+	 */
+	public static final native void cefswt_find(long browser, String search, int forward, int matchCase, int findNext);
+
 	public static final native int cef_app_t_sizeof();
 
 	public static final native int cef_browser_process_handler_t_sizeof();
@@ -195,6 +218,8 @@ public class ChromiumLib extends C {
 
 	public static final native int cef_load_handler_t_sizeof();
 
+	public static final native int cef_keyboard_handler_t_sizeof();
+
 	public static final native int cef_display_handler_t_sizeof();
 
 	public static final native int cef_request_handler_t_sizeof();
@@ -203,9 +228,13 @@ public class ChromiumLib extends C {
 
 	public static final native int cef_context_menu_handler_t_sizeof();
 
+	public static final native int cef_download_handler_t_sizeof();
+
 	public static final native int cef_focus_handler_t_sizeof();
 
 	public static final native int cef_popup_features_t_sizeof();
+
+	public static final native int cef_key_event_t_sizeof();
 
 	public static final native int cef_string_visitor_t_sizeof();
 
@@ -279,7 +308,21 @@ public class ChromiumLib extends C {
 	 * @param src cast=(const void *),flags=no_out
 	 * @param size cast=(size_t)
 	 */
+	public static final native void memmove (long dest, cef_download_handler_t src, int size);
+
+	/**
+	 * @param dest cast=(void *)
+	 * @param src cast=(const void *),flags=no_out
+	 * @param size cast=(size_t)
+	 */
 	public static final native void memmove (long dest, cef_focus_handler_t src, int size);
+
+	/**
+	 * @param dest cast=(void *)
+	 * @param src cast=(const void *),flags=no_out
+	 * @param size cast=(size_t)
+	 */
+	public static final native void memmove (long dest, cef_keyboard_handler_t src, int size);
 
 	/**
 	 * @param dest cast=(void *)
@@ -302,4 +345,10 @@ public class ChromiumLib extends C {
 	 */
 	public static final native void memmove (cef_popup_features_t dest, long src, int size);
 
+	/**
+	 * @param dest cast=(void *)
+	 * @param src cast=(const void *),flags=no_out
+	 * @param size cast=(size_t)
+	 */
+	public static final native void memmove (cef_key_event_t dest, long src, int size);
 }

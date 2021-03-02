@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2020 Equo
+ * Copyright (c) 2021 Equo
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *   Guillermo Zunino, Equo - initial implementation
+ *   Mauro Garcia, Equo - Implemented download links
  ********************************************************************************/
 package org.eclipse.swt.internal.chromium.lib;
 
@@ -123,6 +124,10 @@ public class cef_client_t {
 	public Callback get_request_handler_cb;
 	/** @field flags=no_gen */
 	public Callback get_focus_handler_cb;
+	/** @field flags=no_gen */
+	public Callback get_keyboard_handler_cb;
+	/** @field flags=no_gen */
+	public Callback get_download_handler_cb;
 
 	public static final int sizeof = ChromiumLib.cef_client_t_sizeof();
 

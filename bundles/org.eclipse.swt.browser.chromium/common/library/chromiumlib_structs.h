@@ -17,6 +17,18 @@
 
 #include "chromiumlib.h"
 
+#ifndef NO_DownloadItem
+void cacheDownloadItemFields(JNIEnv *env, jobject lpObject);
+DownloadItem *getDownloadItemFields(JNIEnv *env, jobject lpObject, DownloadItem *lpStruct);
+void setDownloadItemFields(JNIEnv *env, jobject lpObject, DownloadItem *lpStruct);
+#define DownloadItem_sizeof() sizeof(DownloadItem)
+#else
+#define cacheDownloadItemFields(a,b)
+#define getDownloadItemFields(a,b,c) NULL
+#define setDownloadItemFields(a,b,c)
+#define DownloadItem_sizeof() 0
+#endif
+
 #ifndef NO_FunctionSt
 void cacheFunctionStFields(JNIEnv *env, jobject lpObject);
 FunctionSt *getFunctionStFields(JNIEnv *env, jobject lpObject, FunctionSt *lpStruct);
@@ -113,6 +125,18 @@ void setcef_display_handler_tFields(JNIEnv *env, jobject lpObject, cef_display_h
 #define cef_display_handler_t_sizeof() 0
 #endif
 
+#ifndef NO_cef_download_handler_t
+void cachecef_download_handler_tFields(JNIEnv *env, jobject lpObject);
+cef_download_handler_t *getcef_download_handler_tFields(JNIEnv *env, jobject lpObject, cef_download_handler_t *lpStruct);
+void setcef_download_handler_tFields(JNIEnv *env, jobject lpObject, cef_download_handler_t *lpStruct);
+#define cef_download_handler_t_sizeof() sizeof(cef_download_handler_t)
+#else
+#define cachecef_download_handler_tFields(a,b)
+#define getcef_download_handler_tFields(a,b,c) NULL
+#define setcef_download_handler_tFields(a,b,c)
+#define cef_download_handler_t_sizeof() 0
+#endif
+
 #ifndef NO_cef_focus_handler_t
 void cachecef_focus_handler_tFields(JNIEnv *env, jobject lpObject);
 cef_focus_handler_t *getcef_focus_handler_tFields(JNIEnv *env, jobject lpObject, cef_focus_handler_t *lpStruct);
@@ -135,6 +159,30 @@ void setcef_jsdialog_handler_tFields(JNIEnv *env, jobject lpObject, cef_jsdialog
 #define getcef_jsdialog_handler_tFields(a,b,c) NULL
 #define setcef_jsdialog_handler_tFields(a,b,c)
 #define cef_jsdialog_handler_t_sizeof() 0
+#endif
+
+#ifndef NO_cef_key_event_t
+void cachecef_key_event_tFields(JNIEnv *env, jobject lpObject);
+cef_key_event_t *getcef_key_event_tFields(JNIEnv *env, jobject lpObject, cef_key_event_t *lpStruct);
+void setcef_key_event_tFields(JNIEnv *env, jobject lpObject, cef_key_event_t *lpStruct);
+#define cef_key_event_t_sizeof() sizeof(cef_key_event_t)
+#else
+#define cachecef_key_event_tFields(a,b)
+#define getcef_key_event_tFields(a,b,c) NULL
+#define setcef_key_event_tFields(a,b,c)
+#define cef_key_event_t_sizeof() 0
+#endif
+
+#ifndef NO_cef_keyboard_handler_t
+void cachecef_keyboard_handler_tFields(JNIEnv *env, jobject lpObject);
+cef_keyboard_handler_t *getcef_keyboard_handler_tFields(JNIEnv *env, jobject lpObject, cef_keyboard_handler_t *lpStruct);
+void setcef_keyboard_handler_tFields(JNIEnv *env, jobject lpObject, cef_keyboard_handler_t *lpStruct);
+#define cef_keyboard_handler_t_sizeof() sizeof(cef_keyboard_handler_t)
+#else
+#define cachecef_keyboard_handler_tFields(a,b)
+#define getcef_keyboard_handler_tFields(a,b,c) NULL
+#define setcef_keyboard_handler_tFields(a,b,c)
+#define cef_keyboard_handler_t_sizeof() 0
 #endif
 
 #ifndef NO_cef_life_span_handler_t

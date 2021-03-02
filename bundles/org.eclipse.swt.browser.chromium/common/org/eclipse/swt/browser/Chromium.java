@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2020 Equo
+ * Copyright (c) 2021 Equo
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *   Guillermo Zunino, Equo - initial implementation
+ *   Mauro Garcia, Equo - Implemented download links
  ********************************************************************************/
 package org.eclipse.swt.browser;
 
@@ -34,6 +35,7 @@ import org.eclipse.swt.internal.chromium.*;
 import org.eclipse.swt.internal.chromium.CEFFactory.*;
 import org.eclipse.swt.internal.chromium.lib.*;
 import org.eclipse.swt.layout.*;
+import org.eclipse.swt.program.*;
 import org.eclipse.swt.widgets.*;
 
 abstract class Chromium extends WebBrowser {
@@ -72,12 +74,14 @@ abstract class Chromium extends WebBrowser {
 
 	private static cef_client_t clientHandler;
 	private static cef_focus_handler_t focusHandler;
+	private static cef_keyboard_handler_t keyboardHandler;
 	private static cef_life_span_handler_t lifeSpanHandler;
 	private static cef_load_handler_t loadHandler;
 	private static cef_display_handler_t displayHandler;
 	private static cef_request_handler_t requestHandler;
 	private static cef_jsdialog_handler_t jsDialogHandler;
 	private static cef_context_menu_handler_t contextMenuHandler;
+	private static cef_download_handler_t downloadHandler;
 	private static cef_client_t popupClientHandler;
 	private static cef_life_span_handler_t popupLifeSpanHandler;
 
@@ -103,13 +107,17 @@ abstract class Chromium extends WebBrowser {
 	private boolean hasFocus;
 	private boolean ignoreFirstFocus = true;
 	private PaintListener paintListener;
+	private Listener traverseListener;
 	private WindowEvent isPopup;
+	private String lastSearch = null;
+
 
 	public Chromium() {
 	}
 
 	@Override
 	public void setBrowser (Browser browser) {
+		super.setBrowser(browser);
 		this.chromium = browser;
 	}
 
@@ -153,6 +161,20 @@ abstract class Chromium extends WebBrowser {
 				paintListener = null;
 			}
 		};
+
+		Chromium chromiumClass = this;
+		chromium.addKeyListener(new KeyListener() {
+			@Override
+			public void keyReleased(KeyEvent e) {}
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (((e.stateMask & SWT.CTRL) == SWT.CTRL) && (e.keyCode == 'f') && !FindDialog.isOpen()) {
+					FindDialog findDialog = new FindDialog(chromiumClass, chromium.getShell());
+					findDialog.open();
+				}
+			}
+		});
 		chromium.addPaintListener(paintListener);
 	}
 
@@ -335,6 +357,21 @@ abstract class Chromium extends WebBrowser {
 			this.url = "about:blank";
 		}
 		prepareBrowser();
+		if (!"gtk".equals(SWT.getPlatform())) {
+			traverseListener = event -> {
+				if (event.type == SWT.Traverse) {
+					//debugPrint("Ignoring TRAVERSE " + event);
+					event.doit = false;
+				}
+			};
+		}
+		if ("win32".equals(SWT.getPlatform())) {
+			chromium.addListener(SWT.Traverse, traverseListener);
+			chromium.addListener(SWT.KeyDown, traverseListener); // required to take focus on tab
+		}
+		if ("cocoa".equals(SWT.getPlatform())) {
+			chromium.addListener(SWT.KeyDown, traverseListener); // required to take focus on tab
+		}
 		final Display display = chromium.getDisplay();
 		final Color bg = chromium.getBackground();
 		final Color bgColor = bg != null ? bg : display.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND);
@@ -465,12 +502,14 @@ abstract class Chromium extends WebBrowser {
 	private static void set_client_handler() {
 		clientHandler = CEFFactory.newClient();
 		set_focus_handler();
+		set_keyboard_handler();
 		set_life_span_handler();
 		set_load_handler();
 		set_display_handler();
 		set_request_handler();
 		set_jsdialog_handler();
 		set_context_menu_handler();
+		set_download_handler();
 		clientHandler.on_process_message_received_cb = new Callback(Chromium.class, "on_process_message_received", int.class, new Type[] {long.class, long.class, int.class, long.class});
 		clientHandler.on_process_message_received = checkGetAddress(clientHandler.on_process_message_received_cb);
 
@@ -567,6 +606,11 @@ abstract class Chromium extends WebBrowser {
 			disposeCallback(focusHandler.on_take_focus_cb);
 			focusHandler = null;
 		}
+		if (keyboardHandler != null){
+			C.free(keyboardHandler.ptr);
+			disposeCallback(keyboardHandler.on_key_event_cb);
+			keyboardHandler = null;
+		}
 		if (lifeSpanHandler != null) {
 			disposeCallback(lifeSpanHandler.do_close_cb);
 			disposeCallback(lifeSpanHandler.on_after_created_cb);
@@ -604,6 +648,12 @@ abstract class Chromium extends WebBrowser {
 			disposeCallback(contextMenuHandler.run_context_menu_cb);
 			C.free(contextMenuHandler.ptr);
 			contextMenuHandler = null;
+		}
+		if (downloadHandler != null) {
+			disposeCallback(downloadHandler.on_before_download_cb);
+			disposeCallback(downloadHandler.on_download_updated_cb);
+			C.free(downloadHandler.ptr);
+			downloadHandler = null;
 		}
 		if (popupClientHandler != null) {
 			disposeCallback(popupClientHandler.get_life_span_handler_cb);
@@ -999,8 +1049,13 @@ abstract class Chromium extends WebBrowser {
 			debugPrint("on_before_browse:" + event.location);
 			try {
 				loopDisable = true;
-				for (LocationListener listener : locationListeners) {
-					listener.changing(event);
+				if (event.location.startsWith("mailto:")) {
+					Program.launch(event.location);
+					return 1;
+				} else {
+					for (LocationListener listener : locationListeners) {
+						listener.changing(event);
+					}
 				}
 			} finally {
 				loopDisable = false;
@@ -1272,6 +1327,123 @@ abstract class Chromium extends WebBrowser {
 		return 0;
 	}
 
+	private static void set_download_handler() {
+		downloadHandler = CEFFactory.newDownloadHandler();
+		downloadHandler.on_before_download_cb = new Callback(Chromium.class, "on_before_download", void.class, new Type[] {long.class, long.class, long.class, long.class, long.class});
+		downloadHandler.on_before_download = checkGetAddress(downloadHandler.on_before_download_cb);
+		//downloadHandler.on_download_updated_cb = new Callback(Chromium.class, "on_download_updated", void.class, new Type[] {long.class, long.class, long.class, long.class});
+		//downloadHandler.on_download_updated = checkGetAddress(downloadHandler.on_download_updated_cb);
+
+		clientHandler.get_download_handler_cb = new Callback(Chromium.class, "get_download_handler", long.class, new Type[] {long.class});
+		clientHandler.get_download_handler = checkGetAddress(clientHandler.get_download_handler_cb);
+		downloadHandler.ptr = C.malloc (cef_download_handler_t.sizeof);
+		ChromiumLib.memmove(downloadHandler.ptr, downloadHandler, cef_download_handler_t.sizeof);
+	}
+
+	static long get_download_handler(long client) {
+//		debug("GetDownloadHandler");
+		if (downloadHandler == null)
+			return 0;
+		return downloadHandler.ptr;
+	}
+
+	static void on_before_download(long self, long browser, long download_item, long suggested_name, long callback) {
+		int id = ChromiumLib.cefswt_get_id(browser);
+		debug("on_before_download: " + id);
+		safeGeInstance(id).on_before_download(browser, download_item, suggested_name, callback);
+	}
+
+	private void on_before_download(long browser, long download_item, long suggested_name, long callback) {
+		DownloadItem item = new DownloadItem();
+		String name = null;
+		if (suggested_name != 0) {
+			name = ChromiumLib.cefswt_cefstring_to_java(suggested_name);
+		}
+		if ("gtk".equals(SWT.getPlatform())) {
+			FileDialog dlg = new FileDialog(chromium.getShell(), SWT.SAVE);
+			dlg.setText("Save File");
+			dlg.setOverwrite(true);
+			if (name != null && !name.isEmpty()) {
+				dlg.setFileName(name);
+			}
+			String selected = dlg.open();
+			if (selected != null) {
+				ChromiumLib.cefswt_download_item(download_item, item);
+				if (item.status != -1) {
+					new Download(item, selected, this);
+				}
+				ChromiumLib.cefswt_download_callback(callback, selected, 1);
+			}
+		} else {
+			new Download(item, name, this);
+			ChromiumLib.cefswt_download_callback(callback, null, 1);
+		}
+	}
+
+	static class Download {
+		static final Map<Integer, Download> downloads = new HashMap<>();
+		private int id;
+		private String name;
+		private Shell shell;
+		private Label statusLabel;
+		private Button cancel;
+		private long cancel_cb;
+		final Listener cancelListener = event -> {
+			ChromiumLib.cefswt_download_callback(cancel_cb, null, 0);
+			dispose();
+		};
+		private Label nameLabel;
+
+		public Download(DownloadItem item, String name, Chromium browser) {
+			this.id = item.id;
+			this.name = name;
+			Download.downloads.put(item.id, this);
+			shell = new Shell();
+			String msg = Compatibility.getMessage ("SWT_FileDownload"); //$NON-NLS-1$
+			shell.setText (msg);
+			GridLayout gridLayout = new GridLayout ();
+			gridLayout.marginHeight = 15;
+			gridLayout.marginWidth = 15;
+			gridLayout.verticalSpacing = 20;
+			shell.setLayout (gridLayout);
+
+			nameLabel = new Label (shell, SWT.WRAP);
+			setText(item);
+			GridData data = new GridData ();
+			Monitor monitor = browser.chromium.getMonitor ();
+			int maxWidth = monitor.getBounds ().width / 2;
+			int width = nameLabel.computeSize (SWT.DEFAULT, SWT.DEFAULT).x;
+			data.widthHint = Math.min (width, maxWidth);
+			data.horizontalAlignment = GridData.FILL;
+			data.grabExcessHorizontalSpace = true;
+			nameLabel.setLayoutData (data);
+
+			statusLabel = new Label (shell, SWT.NONE);
+			statusLabel.setText (Compatibility.getMessage ("SWT_Download_Started")); //$NON-NLS-1$
+			data = new GridData (GridData.FILL_BOTH);
+			statusLabel.setLayoutData (data);
+
+			cancel = new Button (shell, SWT.PUSH);
+			cancel.setText (Compatibility.getMessage ("SWT_Cancel")); //$NON-NLS-1$
+			data = new GridData ();
+			data.horizontalAlignment = GridData.CENTER;
+			cancel.setLayoutData (data);
+			cancel.addListener (SWT.Selection, cancelListener);
+		}
+
+		private void setText(DownloadItem item) {
+			String nameString = item.file != 0 ? ChromiumLib.cefswt_cefstring_to_java(item.file) : name;
+			String urlString = ChromiumLib.cefswt_cefstring_to_java(item.url);
+			String msg = Compatibility.getMessage ("SWT_Download_Location", new Object[] {nameString +"\n", urlString}); //$NON-NLS-1$
+			nameLabel.setText (msg);
+		}
+
+		private void dispose() {
+			Download.downloads.remove(id);
+			shell.dispose();
+		}
+	}
+
 	private void updateText() {
 		if (browser != 0 && !isDisposed() && disposing == Dispose.No) {
 			debugPrint("update text");
@@ -1316,6 +1488,137 @@ abstract class Chromium extends WebBrowser {
 		disposeCallback(textVisitor.visit_cb);
 		freeDelayed(textVisitor.ptr);
 		textVisitor = null;
+	}
+
+	private static void set_keyboard_handler(){
+		keyboardHandler = CEFFactory.newKeyboardHandler();
+		keyboardHandler.on_key_event_cb = new Callback(Chromium.class, "on_key_event", int.class, new Type[] {long.class, long.class, long.class, long.class});
+		keyboardHandler.on_key_event = checkGetAddress(keyboardHandler.on_key_event_cb);
+
+		clientHandler.get_keyboard_handler_cb = new Callback(Chromium.class, "get_keyboard_handler", long.class, new Type[] {long.class});
+		clientHandler.get_keyboard_handler = checkGetAddress(clientHandler.get_keyboard_handler_cb);
+		keyboardHandler.ptr = C.malloc (cef_keyboard_handler_t.sizeof);
+		ChromiumLib.memmove(keyboardHandler.ptr, keyboardHandler, cef_keyboard_handler_t.sizeof);
+	}
+
+	static long get_keyboard_handler(long client) {
+//		debug("GetKeyboardHandler");
+		if (keyboardHandler == null)
+			return 0;
+		return keyboardHandler.ptr;
+	}
+
+	static int on_key_event(long keyboardHandler, long browser, long event, long os_event) {
+		int id = ChromiumLib.cefswt_get_id(browser);
+		//debug("on_key_event: " + id);
+		return safeGeInstance(id).on_key_event(browser, event, os_event);
+	}
+
+	private enum cef_event_flags {
+		NONE(0),
+		CAPS_LOCK_ON(1),
+		SHIFT_DOWN(2, SWT.SHIFT),
+		CONTROL_DOWN(4, SWT.CONTROL),
+		ALT_DOWN(8, SWT.ALT),
+		/// Mac OS-X command key.
+		COMMAND_DOWN(128, SWT.COMMAND),
+		/// Mac OS-X command key.
+		NUM_LOCK_ON(256),
+		/// Mac OS-X command key.
+		IS_KEY_PAD(512),
+		/// Mac OS-X command key.
+		IS_LEFT(1024),
+		/// Mac OS-X command key.
+		IS_RIGHT(2048);
+
+		int cefFlag;
+		private int swtKey;
+
+		private cef_event_flags(int flag) {
+			this(flag, SWT.NONE);
+		}
+		private cef_event_flags(int flag, int swtKey) {
+			this.cefFlag = flag;
+			this.swtKey = swtKey;
+		}
+
+		boolean shouldSetState(int modifiers, Event event) {
+			if (isSet(modifiers)) {
+				if (event.type == SWT.KeyDown && event.keyCode == swtKey && swtKey != SWT.NONE) {
+					return false;
+				}
+				return true;
+			}
+			else if (event.type == SWT.KeyUp && event.keyCode == swtKey && swtKey != SWT.NONE) {
+				return true;
+			}
+			return false;
+		}
+		boolean isSet(int modifiers) {
+			return (modifiers & cefFlag) != 0;
+		}
+	}
+
+	private int on_key_event(long browser, long event, long os_event) {
+		cef_key_event_t e = new cef_key_event_t();
+		ChromiumLib.memmove(e, event, ChromiumLib.cef_key_event_t_sizeof());
+
+		Event firedEvent = new Event();
+		if (e.type == 0 || e.type == 1) {
+			firedEvent.type = SWT.KeyDown;
+		} else if (e.type == 2) {
+			firedEvent.type = SWT.KeyUp;
+		} else {
+			return 0;
+		}
+
+		int translateKey = e.windows_key_code == 91 || e.windows_key_code == 93 ? SWT.COMMAND : translateKey(e.windows_key_code);
+		firedEvent.keyCode = translateKey != 0 ? translateKey : e.windows_key_code /*+ 32*/;
+		firedEvent.widget = chromium;
+		firedEvent.character = e.character;
+		firedEvent.display = chromium.getDisplay();
+		int stateMask = 0;
+		if (cef_event_flags.CAPS_LOCK_ON.shouldSetState(e.modifiers, firedEvent)){
+			stateMask += SWT.CAPS_LOCK;
+		}
+		if (cef_event_flags.SHIFT_DOWN.shouldSetState(e.modifiers, firedEvent)) {
+			stateMask += SWT.SHIFT;
+		}
+		if (cef_event_flags.CONTROL_DOWN.shouldSetState(e.modifiers, firedEvent)) {
+			stateMask += SWT.CTRL;
+		}
+		if (cef_event_flags.ALT_DOWN.shouldSetState(e.modifiers, firedEvent)) {
+			stateMask += SWT.ALT;
+		}
+		if (cef_event_flags.COMMAND_DOWN.shouldSetState(e.modifiers, firedEvent)) {
+			stateMask += SWT.COMMAND;
+		}
+		if (cef_event_flags.NUM_LOCK_ON.shouldSetState(e.modifiers, firedEvent)) {
+			stateMask += SWT.NUM_LOCK;
+		}
+		if (cef_event_flags.IS_KEY_PAD.shouldSetState(e.modifiers, firedEvent)) {
+			stateMask += SWT.KEYPAD;
+		}
+		if (cef_event_flags.IS_LEFT.shouldSetState(e.modifiers, firedEvent)) {
+			stateMask += SWT.LEFT;
+		}
+		if (cef_event_flags.IS_RIGHT.shouldSetState(e.modifiers, firedEvent)) {
+			stateMask += SWT.RIGHT;
+		}
+		firedEvent.stateMask = stateMask;
+
+//		System.out.println("e.windows_key_code: " + e.windows_key_code + " translated: "+ translateKey(e.windows_key_code));
+//		System.out.println("e.native_key_code: " + e.native_key_code + " translated: "+ translateKey(e.native_key_code));
+//		System.out.println("e.character: " + e.character + " e.unmodified_character: " + e.unmodified_character);
+
+		sendKeyEvent(firedEvent);
+
+		if (firedEvent.doit && "cocoa".equals(SWT.getPlatform())) {
+			int nativeHandleKey = ChromiumLib.cefswt_handlekey(browser, event);
+//			System.out.println("NativeHandleKey: "+nativeHandleKey);
+			return nativeHandleKey;
+		}
+		return 0;
 	}
 
 	private static void set_focus_handler() {
@@ -1564,6 +1867,11 @@ abstract class Chromium extends WebBrowser {
 		if (focusListener != null)
 			chromium.removeFocusListener(focusListener);
 		focusListener = null;
+		if (traverseListener != null) {
+			chromium.removeListener(SWT.Traverse, traverseListener);
+			chromium.removeListener(SWT.KeyDown, traverseListener);
+			traverseListener = null;
+		}
 		if (browser != 0 && callClose) {
 //		browsers.decrementAndGet();
 			debugPrint("call close_browser");
@@ -2034,4 +2342,10 @@ abstract class Chromium extends WebBrowser {
 		void invoke(int loop, int type, long value);
 	}
 
+	public void find(String search, boolean forward, boolean matchCase) {
+		checkBrowser();
+		int findNext = (Objects.equals(search, lastSearch) ? 1 : 0);
+		lastSearch = search;
+		ChromiumLib.cefswt_find(browser, search, forward ? 1 : 0, matchCase ? 1 : 0, findNext);
+	}
 }

@@ -95,6 +95,18 @@ JNIEXPORT jint JNICALL ChromiumLib_NATIVE(cef_1display_1handler_1t_1sizeof)
 }
 #endif
 
+#ifndef NO_cef_1download_1handler_1t_1sizeof
+JNIEXPORT jint JNICALL ChromiumLib_NATIVE(cef_1download_1handler_1t_1sizeof)
+	(JNIEnv *env, jclass that)
+{
+	jint rc = 0;
+	ChromiumLib_NATIVE_ENTER(env, that, cef_1download_1handler_1t_1sizeof_FUNC);
+	rc = (jint)cef_download_handler_t_sizeof();
+	ChromiumLib_NATIVE_EXIT(env, that, cef_1download_1handler_1t_1sizeof_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_cef_1focus_1handler_1t_1sizeof
 JNIEXPORT jint JNICALL ChromiumLib_NATIVE(cef_1focus_1handler_1t_1sizeof)
 	(JNIEnv *env, jclass that)
@@ -115,6 +127,30 @@ JNIEXPORT jint JNICALL ChromiumLib_NATIVE(cef_1jsdialog_1handler_1t_1sizeof)
 	ChromiumLib_NATIVE_ENTER(env, that, cef_1jsdialog_1handler_1t_1sizeof_FUNC);
 	rc = (jint)cef_jsdialog_handler_t_sizeof();
 	ChromiumLib_NATIVE_EXIT(env, that, cef_1jsdialog_1handler_1t_1sizeof_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_cef_1key_1event_1t_1sizeof
+JNIEXPORT jint JNICALL ChromiumLib_NATIVE(cef_1key_1event_1t_1sizeof)
+	(JNIEnv *env, jclass that)
+{
+	jint rc = 0;
+	ChromiumLib_NATIVE_ENTER(env, that, cef_1key_1event_1t_1sizeof_FUNC);
+	rc = (jint)cef_key_event_t_sizeof();
+	ChromiumLib_NATIVE_EXIT(env, that, cef_1key_1event_1t_1sizeof_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_cef_1keyboard_1handler_1t_1sizeof
+JNIEXPORT jint JNICALL ChromiumLib_NATIVE(cef_1keyboard_1handler_1t_1sizeof)
+	(JNIEnv *env, jclass that)
+{
+	jint rc = 0;
+	ChromiumLib_NATIVE_ENTER(env, that, cef_1keyboard_1handler_1t_1sizeof_FUNC);
+	rc = (jint)cef_keyboard_handler_t_sizeof();
+	ChromiumLib_NATIVE_EXIT(env, that, cef_1keyboard_1handler_1t_1sizeof_FUNC);
 	return rc;
 }
 #endif
@@ -264,6 +300,34 @@ JNIEXPORT jint JNICALL ChromiumLib_NATIVE(cefswt_1do_1message_1loop_1work)
 }
 #endif
 
+#ifndef NO_cefswt_1download_1callback
+JNIEXPORT void JNICALL ChromiumLib_NATIVE(cefswt_1download_1callback)
+	(JNIEnv *env, jclass that, jlong arg0, jstring arg1, jint arg2)
+{
+	const char *lparg1= NULL;
+	ChromiumLib_NATIVE_ENTER(env, that, cefswt_1download_1callback_FUNC);
+	if (arg1) if ((lparg1 = (*env)->GetStringUTFChars(env, arg1, NULL)) == NULL) goto fail;
+	cefswt_download_callback((void *)arg0, lparg1, arg2);
+fail:
+	if (arg1 && lparg1) (*env)->ReleaseStringUTFChars(env, arg1, lparg1);
+	ChromiumLib_NATIVE_EXIT(env, that, cefswt_1download_1callback_FUNC);
+}
+#endif
+
+#ifndef NO_cefswt_1download_1item
+JNIEXPORT void JNICALL ChromiumLib_NATIVE(cefswt_1download_1item)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1)
+{
+	DownloadItem _arg1, *lparg1=NULL;
+	ChromiumLib_NATIVE_ENTER(env, that, cefswt_1download_1item_FUNC);
+	if (arg1) if ((lparg1 = &_arg1) == NULL) goto fail;
+	cefswt_download_item((void *)arg0, lparg1);
+fail:
+	if (arg1 && lparg1) setDownloadItemFields(env, arg1, lparg1);
+	ChromiumLib_NATIVE_EXIT(env, that, cefswt_1download_1item_FUNC);
+}
+#endif
+
 #ifndef NO_cefswt_1eval
 JNIEXPORT jboolean JNICALL ChromiumLib_NATIVE(cefswt_1eval)
 	(JNIEnv *env, jclass that, jlong arg0, jstring arg1, jint arg2, jlong arg3)
@@ -291,6 +355,20 @@ JNIEXPORT void JNICALL ChromiumLib_NATIVE(cefswt_1execute)
 fail:
 	if (arg1 && lparg1) (*env)->ReleaseStringUTFChars(env, arg1, lparg1);
 	ChromiumLib_NATIVE_EXIT(env, that, cefswt_1execute_FUNC);
+}
+#endif
+
+#ifndef NO_cefswt_1find
+JNIEXPORT void JNICALL ChromiumLib_NATIVE(cefswt_1find)
+	(JNIEnv *env, jclass that, jlong arg0, jstring arg1, jint arg2, jint arg3, jint arg4)
+{
+	const char *lparg1= NULL;
+	ChromiumLib_NATIVE_ENTER(env, that, cefswt_1find_FUNC);
+	if (arg1) if ((lparg1 = (*env)->GetStringUTFChars(env, arg1, NULL)) == NULL) goto fail;
+	cefswt_find((void *)arg0, lparg1, arg2, arg3, arg4);
+fail:
+	if (arg1 && lparg1) (*env)->ReleaseStringUTFChars(env, arg1, lparg1);
+	ChromiumLib_NATIVE_EXIT(env, that, cefswt_1find_FUNC);
 }
 #endif
 
@@ -429,6 +507,18 @@ JNIEXPORT void JNICALL ChromiumLib_NATIVE(cefswt_1go_1forward)
 	ChromiumLib_NATIVE_ENTER(env, that, cefswt_1go_1forward_FUNC);
 	cefswt_go_forward((void *)arg0);
 	ChromiumLib_NATIVE_EXIT(env, that, cefswt_1go_1forward_FUNC);
+}
+#endif
+
+#ifndef NO_cefswt_1handlekey
+JNIEXPORT jint JNICALL ChromiumLib_NATIVE(cefswt_1handlekey)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
+{
+	jint rc = 0;
+	ChromiumLib_NATIVE_ENTER(env, that, cefswt_1handlekey_FUNC);
+	rc = (jint)cefswt_handlekey((void *)arg0, (void *)arg1);
+	ChromiumLib_NATIVE_EXIT(env, that, cefswt_1handlekey_FUNC);
+	return rc;
 }
 #endif
 
@@ -662,6 +752,19 @@ fail:
 }
 #endif
 
+#ifndef NO_memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1download_1handler_1t_2I
+JNIEXPORT void JNICALL ChromiumLib_NATIVE(memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1download_1handler_1t_2I)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jint arg2)
+{
+	cef_download_handler_t _arg1, *lparg1=NULL;
+	ChromiumLib_NATIVE_ENTER(env, that, memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1download_1handler_1t_2I_FUNC);
+	if (arg1) if ((lparg1 = getcef_download_handler_tFields(env, arg1, &_arg1)) == NULL) goto fail;
+	memmove((void *)arg0, (const void *)lparg1, (size_t)arg2);
+fail:
+	ChromiumLib_NATIVE_EXIT(env, that, memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1download_1handler_1t_2I_FUNC);
+}
+#endif
+
 #ifndef NO_memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1focus_1handler_1t_2I
 JNIEXPORT void JNICALL ChromiumLib_NATIVE(memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1focus_1handler_1t_2I)
 	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jint arg2)
@@ -685,6 +788,19 @@ JNIEXPORT void JNICALL ChromiumLib_NATIVE(memmove__JLorg_eclipse_swt_internal_ch
 	memmove((void *)arg0, (const void *)lparg1, (size_t)arg2);
 fail:
 	ChromiumLib_NATIVE_EXIT(env, that, memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1jsdialog_1handler_1t_2I_FUNC);
+}
+#endif
+
+#ifndef NO_memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1keyboard_1handler_1t_2I
+JNIEXPORT void JNICALL ChromiumLib_NATIVE(memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1keyboard_1handler_1t_2I)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jint arg2)
+{
+	cef_keyboard_handler_t _arg1, *lparg1=NULL;
+	ChromiumLib_NATIVE_ENTER(env, that, memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1keyboard_1handler_1t_2I_FUNC);
+	if (arg1) if ((lparg1 = getcef_keyboard_handler_tFields(env, arg1, &_arg1)) == NULL) goto fail;
+	memmove((void *)arg0, (const void *)lparg1, (size_t)arg2);
+fail:
+	ChromiumLib_NATIVE_EXIT(env, that, memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1keyboard_1handler_1t_2I_FUNC);
 }
 #endif
 
@@ -737,6 +853,20 @@ JNIEXPORT void JNICALL ChromiumLib_NATIVE(memmove__JLorg_eclipse_swt_internal_ch
 	memmove((void *)arg0, (const void *)lparg1, (size_t)arg2);
 fail:
 	ChromiumLib_NATIVE_EXIT(env, that, memmove__JLorg_eclipse_swt_internal_chromium_lib_cef_1string_1visitor_1t_2I_FUNC);
+}
+#endif
+
+#ifndef NO_memmove__Lorg_eclipse_swt_internal_chromium_lib_cef_1key_1event_1t_2JI
+JNIEXPORT void JNICALL ChromiumLib_NATIVE(memmove__Lorg_eclipse_swt_internal_chromium_lib_cef_1key_1event_1t_2JI)
+	(JNIEnv *env, jclass that, jobject arg0, jlong arg1, jint arg2)
+{
+	cef_key_event_t _arg0, *lparg0=NULL;
+	ChromiumLib_NATIVE_ENTER(env, that, memmove__Lorg_eclipse_swt_internal_chromium_lib_cef_1key_1event_1t_2JI_FUNC);
+	if (arg0) if ((lparg0 = getcef_key_event_tFields(env, arg0, &_arg0)) == NULL) goto fail;
+	memmove((void *)lparg0, (const void *)arg1, (size_t)arg2);
+fail:
+	if (arg0 && lparg0) setcef_key_event_tFields(env, arg0, lparg0);
+	ChromiumLib_NATIVE_EXIT(env, that, memmove__Lorg_eclipse_swt_internal_chromium_lib_cef_1key_1event_1t_2JI_FUNC);
 }
 #endif
 

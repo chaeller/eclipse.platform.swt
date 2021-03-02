@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2020 Equo
+ * Copyright (c) 2021 Equo
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *   Guillermo Zunino, Equo - initial implementation
+ *   Mauro Garcia, Equo - Implemented download links
  ********************************************************************************/
 package org.eclipse.swt.internal.chromium;
 
@@ -89,6 +90,12 @@ public class CEFFactory {
 		return st;
 	}
 
+	public static cef_keyboard_handler_t newKeyboardHandler() {
+		cef_keyboard_handler_t st = new cef_keyboard_handler_t();
+		st.base = setBase(st, cef_keyboard_handler_t.sizeof);
+		return st;
+	}
+
 	public static cef_life_span_handler_t newLifeSpanHandler() {
 		cef_life_span_handler_t st = new cef_life_span_handler_t();
 		st.base = setBase(st, cef_life_span_handler_t.sizeof);
@@ -122,6 +129,12 @@ public class CEFFactory {
 	public static cef_context_menu_handler_t newContextMenuHandler() {
 		cef_context_menu_handler_t st = new cef_context_menu_handler_t();
 		st.base = setBase(st, cef_context_menu_handler_t.sizeof);
+		return st;
+	}
+
+	public static cef_download_handler_t newDownloadHandler() {
+		cef_download_handler_t st = new cef_download_handler_t();
+		st.base = setBase(st, cef_download_handler_t.sizeof);
 		return st;
 	}
 

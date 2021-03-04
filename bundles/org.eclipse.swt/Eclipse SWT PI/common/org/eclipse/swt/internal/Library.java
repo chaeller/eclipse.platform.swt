@@ -319,18 +319,18 @@ public static void loadLibrary (String name, boolean mapName) {
 	String fileName2 = mappedName2;
 	if (path == null) {
 		path = USER_HOME;
-		File dir = new File (path, SWT_LIB_DIR);
-		if ((dir.exists () && dir.isDirectory ()) || dir.mkdirs ()) { // Create if not exist.
-			path = dir.getAbsolutePath ();
-		} else {
-			/* fall back to using the home dir directory */
-			fileName1 = mapLibraryName (libName1 + SUFFIX_64);
-			fileName2 = mapLibraryName (libName2 + SUFFIX_64);
-		}
-		if (load (path + SEPARATOR + fileName1, message)) return;
-		if (mapName && load (path + SEPARATOR + fileName2, message)) return;
 	}
-
+	File dir = new File (path, SWT_LIB_DIR);
+	if ((dir.exists () && dir.isDirectory ()) || dir.mkdirs ()) { // Create if not exist.
+		path = dir.getAbsolutePath ();
+	} else {
+		/* fall back to using the home dir directory */
+		fileName1 = mapLibraryName (libName1 + SUFFIX_64);
+		fileName2 = mapLibraryName (libName2 + SUFFIX_64);
+	}
+	if (load (path + SEPARATOR + fileName1, message)) return;
+	if (mapName && load (path + SEPARATOR + fileName2, message)) return;
+	
 	/* Try extracting and loading library from jar. */
 	if (path != null) {
 		if (extract (path + SEPARATOR + fileName1, mappedName1)) {
@@ -460,9 +460,7 @@ public static File findResource(String subDir, String resourceName, boolean mapR
 
 		/* Try loading library from swt library path */
 		String path = SWT_DIR;
-		if (path != null) {
-			path = new File(path).getAbsolutePath();
-		} else {
+		if (path == null) {
 			path = USER_HOME;
 		}
 
@@ -477,7 +475,7 @@ public static File findResource(String subDir, String resourceName, boolean mapR
 				tempDir.mkdirs ();
 			}
 
-			if (extract(file.getPath(), maybeSubDirPath + finalResourceName)) {
+			if (extract (file.getPath(), maybeSubDirPath + finalResourceName)) {
 				if (file.exists()) {
 					return file;
 				}

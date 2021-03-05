@@ -10,6 +10,7 @@
  * Contributors:
  *   Guillermo Zunino, Equo - initial implementation
  *   Mauro Garcia, Equo - Implemented download links
+ *   Marcel Keller - fixed confirm and alert dialogs
  ********************************************************************************/
 package org.eclipse.swt.browser;
 
@@ -1221,10 +1222,10 @@ abstract class Chromium extends WebBrowser {
 		int style = SWT.ICON_WORKING;
 		switch (dialog_type) {
 		case cef_jsdialog_handler_t.JSDIALOGTYPE_ALERT:
-			style = SWT.ICON_INFORMATION;
+			style = SWT.ICON_WARNING;
 			break;
 		case cef_jsdialog_handler_t.JSDIALOGTYPE_CONFIRM:
-			style = SWT.ICON_WARNING;
+			style = SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL;
 			break;
 		case cef_jsdialog_handler_t.JSDIALOGTYPE_PROMPT:
 			style = SWT.ICON_QUESTION | SWT.YES | SWT.NO;
